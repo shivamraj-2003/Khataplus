@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { Upload } from 'lucide-react';
 
-export default function Page() {
+export default function FileUploadPreview() {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [showFiles, setShowFiles] = useState(false);
 
   useEffect(() => {
     try {
       const storedFiles = JSON.parse(localStorage.getItem('uploadedFiles')) || [];
-      setSelectedFiles(storedFiles);
+      // Filter out invalid file objects
+      const validFiles = storedFiles.filter(file => file && file.name && file.data);
+      setSelectedFiles(validFiles);
     } catch (error) {
       console.error('Failed to load files from localStorage:', error);
     }
@@ -41,62 +44,61 @@ export default function Page() {
     }
   };
 
-  const toggleShowFiles = () => {
-    setShowFiles(!showFiles);
-  };
-
   const openFile = (fileData) => {
-  
-      const newWindow = window.open();
-      if (newWindow) {
-        newWindow.document.write(`<iframe src="${fileData}" width="100%" height="100%"></iframe>`);
-      } else {
-        console.error('Failed to open new window');
-      }
-    
+    const newWindow = window.open();
+    if (newWindow) {
+      newWindow.document.write(`<iframe src="${fileData}" width="100%" height="100%"></iframe>`);
+    } else {
+      console.error('Failed to open new window');
+    }
   };
 
   return (
-    <div className="flex flex-col justify-center items-center bg-slate-300 min-h-screen p-4">
-      <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full max-w-3xl">
-        <input
-          type="file"
-          accept="image/*,application/pdf"
-          onChange={ handleFileUpload }
-          className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 w-full sm:w-auto"
-        />
+    <div className="flex flex-col items-center justify-center min-h-screen bg-purple-200 p-4">
+      <div className="w-full max-w-2xl">
+        <h1 className="text-3xl font-bold text-center text-indigo-700 mb-2">File Upload</h1>
 
-        <button
-          onClick={ toggleShowFiles }
-          className="bg-blue-500 text-white px-6 py-2 rounded whitespace-nowrap"
-        >
-          { showFiles ? 'Hide Files' : 'Show Files' }
-        </button>
+        <div className="border-2 border-indigo-200 rounded-lg p-8">
+          <div className="flex flex-col items-center justify-center">
+            <Upload className="w-12 h-12 text-indigo-400 mb-4" />
+            <p className="text-gray-500 mb-4">Select a file or drag here</p>
+            <label htmlFor="file-upload" className="bg-indigo-600 text-white px-4 py-2 rounded cursor-pointer hover:bg-indigo-700 transition duration-300">
+              Select a file
+            </label>
+            <input
+              id="file-upload"
+              type="file"
+              accept="image/*,application/pdf"
+              onChange={ handleFileUpload }
+              className="hidden"
+            />
+          </div>
+        </div>
+
+        { selectedFiles.length > 0 && (
+          <div className="mt-6">
+            <h2 className="text-xl font-semibold mb-2">Uploaded Files:</h2>
+            <ul>
+              { selectedFiles.map((file, index) => (
+                // Add a defensive check here
+                file && file.name ? (
+                  <li
+                    key={ index }
+                    className="text-indigo-600 underline cursor-pointer mb-1"
+                    onClick={ () => openFile(file.data) }
+                  >
+                    { file.name }
+                  </li>
+                ) : (
+                  <li key={ index } className="text-red-600 mb-1">
+                    Error: Invalid file
+                  </li>
+                )
+              )) }
+            </ul>
+          </div>
+        ) }
       </div>
-
-      { showFiles && (
-        <ul className="w-full max-w-3xl mt-4">
-          { selectedFiles.length > 0 ? (
-            selectedFiles.map((file, index) => (
-              file && file.name ? (
-                <li
-                  key={ index }
-                  className="mb-2 text-center text-blue-600 underline cursor-pointer"
-                  onClick={ () => openFile(file.data) }
-                >
-                  { file.name }
-                </li>
-              ) : (
-                <li key={ index } className="mb-2 text-center text-red-600">
-                  Error: Invalid file data
-                </li>
-              )
-            ))
-          ) : (
-            <li className="text-center">No files uploaded</li>
-          ) }
-        </ul>
-      ) }
     </div>
   );
 }
